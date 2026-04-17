@@ -13,4 +13,4 @@ A web application that detects fake product reviews using sentiment analysis and
 
 ## 🎥 Demo
 
-https://github.com/AKSHAYA-ux-bit/fake-product-review-detection/blob/main/project-demo.mp4
+[https://github.com/AKSHAYA-ux-bit/fake-product-review-detection/blob/main/project-demo.mp4](https://github.com/AKSHAYA-ux-bit/fake-product-review-system/blob/main/demo.gif)

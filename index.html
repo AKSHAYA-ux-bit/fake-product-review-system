@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fake Review Monitoring</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #16161C;
+;
+  --bg2: #16161C;
+  --bg3: #1E1E26;
+  --border: #2A2A35;
+  --border2: #333340;
+  --text: #F0EFF8;
+  --text2: #9898B0;
+  --text3: #6060788;
+  --accent: #7C6FE0;
+  --accent2: #9F96F0;
+  --fake: #E24B4A;
+  --genuine: #4CAF7D;
+  --warn: #EF9F27;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+h1,h2,h3,.brand { font-family: 'Syne', sans-serif; }
+ 
+/* NAV */
+.nav {
+  display: flex; align-items: center; gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: rgba(14,14,18,0.92);
+  backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 100;
+}
+.brand {
+  font-size: 16px; font-weight: 700; padding: 14px 24px;
+  border-right: 1px solid var(--border);
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--accent2), #C084FC);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.nav-tab {
+  padding: 14px 18px; font-size: 13px; cursor: pointer;
+  color: var(--text2); border: none; background: transparent;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.nav-tab:hover:not(.active) { color: var(--text); }
+.nav-user {
+  margin-left: auto; padding: 8px 20px; font-size: 12px; color: var(--text2);
+  display: flex; align-items: center; gap: 8px;
+}
+.user-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--genuine); display: none; }
+.user-dot.visible { display: block; }
+ 
+/* PAGES */
+.page { display: none; padding: 24px; max-width: 1100px; margin: 0 auto; }
+.page.active { display: block; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+ 
+/* CARDS */
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+}
+.card-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+.card-subtitle { font-size: 12px; color: var(--text2); margin-top: 4px; margin-bottom: 16px; }
+ 
+/* FORMS */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; font-weight: 500; color: var(--text2); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+input, textarea, select {
+  width: 100%; font-size: 14px; padding: 10px 12px;
+  border: 1px solid var(--border2); border-radius: var(--radius-sm);
+  background: var(--bg3); color: var(--text);
+  font-family: 'DM Sans', sans-serif; outline: none;
+  transition: border-color 0.2s;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 90px; }
+select option { background: var(--bg3); }
+ 
+.btn {
+  padding: 9px 20px; font-size: 13px; font-weight: 500;
+  border-radius: var(--radius-sm); cursor: pointer;
+  border: 1px solid var(--border2); background: var(--bg3); color: var(--text);
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.btn:hover { background: var(--bg2); border-color: var(--accent); }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: #6859D0; border-color: #6859D0; }
+.btn-danger { color: var(--fake); border-color: rgba(226,75,74,0.3); background: rgba(226,75,74,0.08); }
+.btn-danger:hover { background: rgba(226,75,74,0.15); }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+ 
+.err { font-size: 12px; color: var(--fake); margin-top: 6px; min-height: 18px; }
+.info { font-size: 12px; color: var(--text2); margin-top: 6px; }
+ 
+/* GRID */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+ 
+/* METRICS */
+.metric { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; }
+.metric-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+.metric-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; color: var(--text); }
+ 
+/* BADGES */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; padding: 3px 9px;
+  border-radius: 99px; letter-spacing: 0.02em;
+}
+.badge-fake { background: rgba(226,75,74,0.15); color: #FF7B7A; border: 1px solid rgba(226,75,74,0.3); }
+.badge-genuine { background: rgba(76,175,125,0.12); color: #6DD9A3; border: 1px solid rgba(76,175,125,0.25); }
+.badge-positive { background: rgba(76,175,125,0.12); color: #6DD9A3; border: 1px solid rgba(76,175,125,0.25); }
+.badge-negative { background: rgba(226,75,74,0.15); color: #FF7B7A; border: 1px solid rgba(226,75,74,0.3); }
+.badge-neutral { background: rgba(150,150,180,0.12); color: #ABABC8; border: 1px solid rgba(150,150,180,0.2); }
+ 
+/* SUB TABS */
+.tab-row { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.sub-tab {
+  padding: 10px 16px; font-size: 13px; cursor: pointer;
+  color: var(--text2); border: none; background: transparent;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.sub-tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 500; }
+ 
+/* REVIEW ROW */
+.review-row { border-bottom: 1px solid var(--border); padding: 12px 0; }
+.review-row:last-child { border-bottom: none; }
+.review-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.review-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.stars { color: var(--warn); font-size: 13px; letter-spacing: -1px; }
+ 
+/* PROGRESS BAR */
+.bar-wrap { background: var(--bg3); border-radius: 99px; height: 6px; margin-top: 4px; overflow: hidden; }
+.bar-fill { height: 6px; border-radius: 99px; transition: width 0.6s cubic-bezier(.16,1,.3,1); }
+ 
+/* RESULT BOX */
+.result-box {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 16px; margin-top: 14px;
+  animation: fadeUp 0.25s ease;
+}
+ 
+/* TABLE */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th { text-align: left; padding: 8px 10px; color: var(--text2); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); }
+.data-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+.data-table tr:last-child td { border-bottom: none; }
+ 
+/* SPINNER */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+ 
+/* HOW IT WORKS */
+.step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--bg3); border: 1px solid var(--border2); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--accent2); }
+.step-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
+ 
+/* API STATUS */
+.api-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); padding: 6px 20px; border-left: 1px solid var(--border); }
+.api-dot { width: 6px; height: 6px; border-radius: 50%; background: #888; }
+.api-dot.online { background: var(--genuine); box-shadow: 0 0 6px var(--genuine); }
+.api-dot.offline { background: var(--fake); }
+ 
+/* LOADING OVERLAY */
+.loading-overlay { display: none; position: fixed; inset: 0; background: rgba(14,14,18,0.8); backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
+.loading-overlay.visible { display: flex; }
+.loading-text { font-size: 13px; color: var(--text2); }
+</style>
+</head>
+<body>
+ 
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner" style="width:24px;height:24px;border-width:3px"></div>
+  <div class="loading-text">Connecting to API...</div>
+</div>
+ 
+<nav class="nav">
+  <div class="brand">Review Monitoring</div>
+  <button class="nav-tab active" data-page="user" onclick="showPage('user',this)">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    User
+  </button>
+  <button class="nav-tab" data-page="analyze" onclick="showPage('analyze',this)">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Analyze
+  </button>
+  <button class="nav-tab" data-page="my-dashboard" onclick="showPage('my-dashboard',this)" id="nav-my-dashboard" style="display:none">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 2h5v5H2z" stroke="currentColor" stroke-width="1.5" rx="1"/><path d="M9 2h5v5H9z" stroke="currentColor" stroke-width="1.5" rx="1"/><path d="M2 9h5v5H2z" stroke="currentColor" stroke-width="1.5" rx="1"/><path d="M9 9h5v5H9z" stroke="currentColor" stroke-width="1.5" rx="1"/></svg>
+    My Dashboard
+  </button>
+  <button class="nav-tab" data-page="admin" onclick="showPage('admin',this)">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="8" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="6.5" y="5" width="3" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="3" height="12" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+    Admin
+  </button>
+  <button class="nav-tab" data-page="dashboard" onclick="showPage('dashboard',this)">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z" stroke="currentColor" stroke-width="1.5" rx="1"/></svg>
+    Dashboard
+  </button>
+  <div class="nav-user">
+    <div class="user-dot" id="user-dot"></div>
+    <span id="logged-user"></span>
+  </div>
+  <div class="api-status">
+    <div class="api-dot" id="api-dot"></div>
+    <span id="api-status-text">API</span>
+  </div>
+</nav>
+ 
+<!-- ═══ USER MODULE ═══════════════════════════════════════════════════════════ -->
+<div id="page-user" class="page active">
+  <div id="auth-panel">
+    <div class="tab-row">
+      <button class="sub-tab active" onclick="showAuthTab('login',this)">Sign In</button>
+      <button class="sub-tab" onclick="showAuthTab('register',this)">Create Account</button>
+    </div>
+    <div id="login-form">
+      <div class="card" style="max-width:400px">
+        <div class="card-title">Welcome back</div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="login-email" placeholder="you@example.com" /></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" /></div>
+        <div class="err" id="login-err"></div>
+        <div style="margin-top:14px;display:flex;gap:8px">
+          <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Sign in</button>
+          <button class="btn" onclick="showAdminPage()">Admin access</button>
+        </div>
+        <div class="info" style="margin-top:10px;padding:10px;background:var(--bg3);border-radius:var(--radius-sm)">
+          Demo: <strong>user@demo.com</strong> / <strong>pass123</strong>
+        </div>
+      </div>
+    </div>
+    <div id="register-form" style="display:none">
+      <div class="card" style="max-width:400px">
+        <div class="card-title">Create your account</div>
+        <div class="form-group"><label class="form-label">Full name</label><input type="text" id="reg-name" placeholder="Your name" /></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="reg-email" placeholder="you@example.com" /></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" id="reg-pass" placeholder="••••••••" /></div>
+        <div class="err" id="reg-err"></div>
+        <button class="btn btn-primary" style="margin-top:14px" id="reg-btn" onclick="doRegister()">Create account</button>
+      </div>
+    </div>
+  </div>
+  <div id="review-panel" style="display:none">
+    <div class="grid2" style="margin-bottom:0">
+      <div class="card">
+        <div class="card-title">Submit a review</div>
+        <div class="form-group"><label class="form-label">Product name</label><input type="text" id="rev-product" placeholder="e.g. Bluetooth Speaker" /></div>
+        <div class="form-group"><label class="form-label">Star rating</label>
+          <select id="rev-stars"><option>5</option><option>4</option><option>3</option><option selected>2</option><option>1</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Your review</label><textarea id="rev-text" placeholder="Write your honest review..."></textarea></div>
+        <div class="err" id="rev-err"></div>
+        <button class="btn btn-primary" style="margin-top:4px" id="rev-btn" onclick="submitReview()">Submit review</button>
+      </div>
+      <div class="card">
+        <div class="card-title">My reviews</div>
+        <div id="my-reviews-list"><div class="info">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<!-- ═══ ANALYZE MODULE ════════════════════════════════════════════════════════ -->
+<div id="page-analyze" class="page">
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Opinion Mining Engine</div>
+      <div class="form-group"><label class="form-label">Review text</label><textarea id="analyze-text" placeholder="Paste any review text here..."></textarea></div>
+      <div class="form-group"><label class="form-label">Star rating (optional)</label>
+        <select id="analyze-stars"><option value="">— select —</option><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select>
+      </div>
+      <button class="btn btn-primary" id="analyze-btn" onclick="analyzeReview()">Analyze review</button>
+      <div id="analyze-result"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">How detection works</div>
+      <div class="step"><div class="step-num">1</div><div class="step-text"><strong>NLP Preprocessing</strong> — tokenizes, lowercases and cleans the review text</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Sentiment Analysis</strong> — TextBlob-style polarity scoring using pos/neg word lexicons</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text"><strong>TF-IDF Feature Extraction</strong> — key phrase detection and spam phrase matching</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Logistic Regression Classifier</strong> — predicts Fake / Genuine with confidence score</div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-text"><strong>Mismatch Detection</strong> — flags sentiment-star rating anomalies</div></div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">Detection signals</div>
+        <div style="font-size:12px;color:var(--text2);line-height:2">
+          • Positive text + 1–2 star rating → suspicious<br>
+          • Negative text + 4–5 star rating → suspicious<br>
+          • Extremely short text with extreme rating<br>
+          • Repeated filler / generic phrases<br>
+          • Promotional / ad language<br>
+          • Excessive special characters or emoji overuse
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<!-- ═══ USER DASHBOARD MODULE ══════════════════════════════════════════════════ -->
+<div id="page-my-dashboard" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div>
+      <h2 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;letter-spacing:-0.02em" id="ud-greeting">My Dashboard</h2>
+      <div style="font-size:12px;color:var(--text2);margin-top:3px">Your personal review activity & insights</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="showPage('user', document.querySelector('[data-page=user]'))">+ Submit review</button>
+  </div>
+
+  <!-- Metric row -->
+  <div class="grid3" style="margin-bottom:20px">
+    <div class="metric">
+      <div class="metric-label">My Reviews</div>
+      <div class="metric-value" id="ud-total">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Flagged Fake</div>
+      <div class="metric-value" style="color:var(--fake)" id="ud-fake">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Avg Confidence</div>
+      <div class="metric-value" style="color:var(--accent2)" id="ud-avgconf">—</div>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:16px">
+    <!-- Sentiment breakdown -->
+    <div class="card">
+      <div class="card-title">My sentiment breakdown</div>
+      <div id="ud-sentiment-chart"><div class="info">No data yet.</div></div>
+    </div>
+
+    <!-- Fake vs Genuine donut -->
+    <div class="card" style="text-align:center">
+      <div class="card-title" style="text-align:left">Fake vs Genuine</div>
+      <canvas id="ud-donut" width="180" height="180" style="display:block;margin:10px auto 0"></canvas>
+      <div style="display:flex;gap:20px;justify-content:center;margin-top:10px;font-size:12px">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:var(--fake);display:inline-block"></span>Fake</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:var(--genuine);display:inline-block"></span>Genuine</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confidence bar per review -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">Confidence scores per review</div>
+    <div id="ud-conf-bars"><div class="info">No reviews yet.</div></div>
+  </div>
+
+  <!-- Recent reviews table -->
+  <div class="card">
+    <div class="card-title">My review history</div>
+    <div style="overflow-x:auto"><div id="ud-table"><div class="info">Loading...</div></div></div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN MODULE ══════════════════════════════════════════════════════════ -->
+<div id="page-admin" class="page">
+  <div id="admin-login-panel">
+    <div class="card" style="max-width:400px">
+      <div class="card-title">Admin sign in</div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" id="admin-email" placeholder="admin@demo.com" /></div>
+      <div class="form-group"><label class="form-label">Password</label><input type="password" id="admin-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()" /></div>
+      <div class="err" id="admin-err"></div>
+      <button class="btn btn-primary" style="margin-top:14px" id="admin-login-btn" onclick="adminLogin()">Sign in as admin</button>
+      <div class="info" style="margin-top:10px;padding:10px;background:var(--bg3);border-radius:var(--radius-sm)">
+        Demo: <strong>admin@demo.com</strong> / <strong>admin123</strong>
+      </div>
+    </div>
+  </div>
+  <div id="admin-panel" style="display:none">
+    <div class="grid3" style="margin-bottom:20px">
+      <div class="metric"><div class="metric-label">Total Reviews</div><div class="metric-value" id="m-total">—</div></div>
+      <div class="metric"><div class="metric-label">Fake Detected</div><div class="metric-value" id="m-fake" style="color:var(--fake)">—</div></div>
+      <div class="metric"><div class="metric-label">Genuine</div><div class="metric-value" id="m-genuine" style="color:var(--genuine)">—</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">All reviews — moderate & manage</div>
+      <div id="admin-review-list"><div class="info">Loading...</div></div>
+    </div>
+  </div>
+</div>
+ 
+<!-- ═══ DASHBOARD MODULE ══════════════════════════════════════════════════════ -->
+<div id="page-dashboard" class="page">
+  <div class="grid3" style="margin-bottom:20px">
+    <div class="metric"><div class="metric-label">Reviews Analyzed</div><div class="metric-value" id="d-total">—</div></div>
+    <div class="metric"><div class="metric-label">Fake Detection Rate</div><div class="metric-value" id="d-rate" style="color:var(--fake)">—</div></div>
+    <div class="metric"><div class="metric-label">Genuine Reviews</div><div class="metric-value" id="d-genuine" style="color:var(--genuine)">—</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Sentiment distribution</div>
+      <div id="sentiment-chart"></div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="card-title" style="text-align:left">Fake vs Genuine</div>
+      <canvas id="donut-canvas" width="200" height="200" style="display:block;margin:0 auto"></canvas>
+      <div style="display:flex;gap:20px;justify-content:center;margin-top:10px;font-size:12px">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:var(--fake);display:inline-block"></span>Fake</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:var(--genuine);display:inline-block"></span>Genuine</span>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:4px">
+    <div class="card-title">Review database</div>
+    <div style="overflow-x:auto"><div id="db-table"></div></div>
+  </div>
+</div>
+ 
+<script>
+const API = 'http://localhost:3001/api';
+let authToken = localStorage.getItem('rg_token');
+let currentUser = JSON.parse(localStorage.getItem('rg_user') || 'null');
+let adminToken = null;
+ 
+// ─── API helper ────────────────────────────────────────────────────────────
+async function apiFetch(path, options = {}, token = authToken) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(API + path, { ...options, headers: { ...headers, ...(options.headers || {}) } });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+ 
+// ─── Health check ──────────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    await apiFetch('/health');
+    document.getElementById('api-dot').className = 'api-dot online';
+    document.getElementById('api-status-text').textContent = 'API online';
+  } catch {
+    document.getElementById('api-dot').className = 'api-dot offline';
+    document.getElementById('api-status-text').textContent = 'API offline';
+  }
+}
+checkHealth();
+setInterval(checkHealth, 15000);
+ 
+// ─── Nav ───────────────────────────────────────────────────────────────────
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'my-dashboard') loadUserDashboard();
+  if (name === 'admin' && adminToken) loadAdminPanel();
+  if (name === 'user' && currentUser) loadMyReviews();
+}
+ 
+function showAuthTab(tab, btn) {
+  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+}
+ 
+function showAdminPage() {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('[data-page="admin"]').classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-admin').classList.add('active');
+}
+ 
+// ─── Auth ──────────────────────────────────────────────────────────────────
+function setLoginState(user, token) {
+  authToken = token;
+  currentUser = user;
+  localStorage.setItem('rg_token', token);
+  localStorage.setItem('rg_user', JSON.stringify(user));
+  document.getElementById('logged-user').textContent = 'Hi, ' + user.name;
+  document.getElementById('user-dot').classList.add('visible');
+  document.getElementById('auth-panel').style.display = 'none';
+  document.getElementById('review-panel').style.display = 'block';
+  document.getElementById('nav-my-dashboard').style.display = 'flex';
+  loadMyReviews();
+}
+ 
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const btn = document.getElementById('login-btn');
+  document.getElementById('login-err').textContent = '';
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  try {
+    const { token, user } = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pass }) }, null);
+    setLoginState(user, token);
+  } catch (e) {
+    document.getElementById('login-err').textContent = e.message;
+  } finally {
+    btn.innerHTML = 'Sign in'; btn.disabled = false;
+  }
+}
+ 
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const btn = document.getElementById('reg-btn');
+  document.getElementById('reg-err').textContent = '';
+  if (!name || !email || !pass) { document.getElementById('reg-err').textContent = 'All fields required.'; return; }
+  btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
+  try {
+    const { token, user } = await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password: pass }) }, null);
+    setLoginState(user, token);
+  } catch (e) {
+    document.getElementById('reg-err').textContent = e.message;
+  } finally {
+    btn.innerHTML = 'Create account'; btn.disabled = false;
+  }
+}
+ 
+async function adminLogin() {
+  const email = document.getElementById('admin-email').value.trim();
+  const pass = document.getElementById('admin-pass').value;
+  const btn = document.getElementById('admin-login-btn');
+  document.getElementById('admin-err').textContent = '';
+  btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
+  try {
+    const { token, user } = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pass }) }, null);
+    if (user.role !== 'admin') throw new Error('Not an admin account');
+    adminToken = token;
+    document.getElementById('admin-login-panel').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    document.getElementById('logged-user').textContent = 'Admin';
+    document.getElementById('user-dot').classList.add('visible');
+    loadAdminPanel();
+  } catch (e) {
+    document.getElementById('admin-err').textContent = e.message;
+  } finally {
+    btn.innerHTML = 'Sign in as admin'; btn.disabled = false;
+  }
+}
+ 
+// ─── Reviews ───────────────────────────────────────────────────────────────
+async function loadMyReviews() {
+  const el = document.getElementById('my-reviews-list');
+  try {
+    const reviews = await apiFetch('/reviews/my');
+    if (!reviews.length) { el.innerHTML = '<div class="info">No reviews yet.</div>'; return; }
+    el.innerHTML = reviews.map(r => `<div class="review-row">
+      <div class="review-meta">
+        <span style="font-size:13px;font-weight:500">${r.product}</span>
+        <span class="stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</span>
+        <span class="badge badge-${r.prediction.toLowerCase()}">${r.prediction}</span>
+        <span class="badge badge-${r.sentiment.toLowerCase()}">${r.sentiment}</span>
+        ${r.mismatch ? '<span class="badge badge-fake">Mismatch</span>' : ''}
+      </div>
+      <div class="review-text">${r.text}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:6px">${r.date} · Confidence: ${r.confidence}%</div>
+    </div>`).join('');
+  } catch { el.innerHTML = '<div class="info">Failed to load reviews.</div>'; }
+}
+ 
+async function submitReview() {
+  const product = document.getElementById('rev-product').value.trim();
+  const stars = document.getElementById('rev-stars').value;
+  const text = document.getElementById('rev-text').value.trim();
+  const btn = document.getElementById('rev-btn');
+  document.getElementById('rev-err').textContent = '';
+  if (!product || !text) { document.getElementById('rev-err').textContent = 'Fill in product and review.'; return; }
+  btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
+  try {
+    await apiFetch('/reviews', { method: 'POST', body: JSON.stringify({ product, stars, text }) });
+    document.getElementById('rev-product').value = '';
+    document.getElementById('rev-text').value = '';
+    loadMyReviews();
+  } catch (e) {
+    document.getElementById('rev-err').textContent = e.message;
+  } finally {
+    btn.innerHTML = 'Submit review'; btn.disabled = false;
+  }
+}
+ 
+// ─── Analyze ───────────────────────────────────────────────────────────────
+async function analyzeReview() {
+  const text = document.getElementById('analyze-text').value.trim();
+  const stars = document.getElementById('analyze-stars').value;
+  const btn = document.getElementById('analyze-btn');
+  if (!text) return;
+  btn.innerHTML = '<span class="spinner"></span> Analyzing...'; btn.disabled = true;
+  try {
+    const r = await apiFetch('/analyze', { method: 'POST', body: JSON.stringify({ text, stars }) }, null);
+    const polarityPct = Math.round((r.polarity + 1) / 2 * 100);
+    document.getElementById('analyze-result').innerHTML = `
+    <div class="result-box">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <span class="badge badge-${r.isFake?'fake':'genuine'}" style="font-size:12px;padding:4px 12px">${r.isFake ? '⚠ Fake review' : '✓ Genuine review'}</span>
+        <span class="badge badge-${r.sentiment.toLowerCase()}">${r.sentiment}</span>
+        ${r.mismatch ? '<span class="badge badge-fake">Sentiment–rating mismatch</span>' : ''}
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Confidence: <strong style="color:var(--text)">${r.confidence}%</strong></div>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${r.confidence}%;background:${r.isFake?'var(--fake)':'var(--genuine)'}"></div></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Sentiment polarity: <strong style="color:var(--text)">${r.polarity.toFixed(2)}</strong></div>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${polarityPct}%;background:${r.sentiment==='Positive'?'var(--genuine)':r.sentiment==='Negative'?'var(--fake)':'#888'}"></div></div>
+      </div>
+      ${r.reasons.length ? `
+        <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Detection signals</div>
+        ${r.reasons.map(s => `<div style="font-size:12px;color:var(--fake);padding:3px 0;display:flex;gap:6px"><span>⚡</span><span>${s}</span></div>`).join('')}
+      ` : '<div style="font-size:12px;color:var(--genuine)">✓ No suspicious signals detected</div>'}
+    </div>`;
+  } catch (e) {
+    document.getElementById('analyze-result').innerHTML = `<div class="err">Analysis failed: ${e.message}</div>`;
+  } finally {
+    btn.innerHTML = 'Analyze review'; btn.disabled = false;
+  }
+}
+ 
+// ─── Admin ─────────────────────────────────────────────────────────────────
+async function loadAdminPanel() {
+  try {
+    const [stats, reviews] = await Promise.all([
+      apiFetch('/admin/stats', {}, adminToken),
+      apiFetch('/admin/reviews', {}, adminToken)
+    ]);
+    document.getElementById('m-total').textContent = stats.total;
+    document.getElementById('m-fake').textContent = stats.fake;
+    document.getElementById('m-genuine').textContent = stats.genuine;
+    document.getElementById('admin-review-list').innerHTML = reviews.length
+      ? reviews.map(r => `<div class="review-row">
+          <div class="review-meta">
+            <span style="font-size:13px;font-weight:500">${r.product}</span>
+            <span class="stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</span>
+            <span style="font-size:12px;color:var(--text2)">${r.userName}</span>
+            <span class="badge badge-${r.prediction.toLowerCase()}">${r.prediction}</span>
+            <span class="badge badge-${r.sentiment.toLowerCase()}">${r.sentiment}</span>
+            ${r.mismatch ? '<span class="badge badge-fake">Mismatch</span>' : ''}
+          </div>
+          <div class="review-text">${r.text}</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+            <span style="font-size:11px;color:var(--text2)">${r.date} · Confidence: ${r.confidence}%</span>
+            ${r.prediction === 'Fake'
+              ? `<button class="btn btn-danger btn-sm" onclick="deleteReview('${r.id}')">Delete</button>`
+              : `<span style="font-size:11px;color:var(--genuine);display:flex;align-items:center;gap:4px"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Genuine — protected</span>`
+            }
+          </div>
+        </div>`).join('')
+      : '<div class="info">No reviews yet.</div>';
+  } catch (e) {
+    document.getElementById('admin-review-list').innerHTML = `<div class="err">Failed to load: ${e.message}</div>`;
+  }
+}
+ 
+async function deleteReview(id) {
+  try {
+    await apiFetch(`/admin/reviews/${id}`, { method: 'DELETE' }, adminToken);
+    loadAdminPanel();
+  } catch (e) { alert('Delete failed: ' + e.message); }
+}
+ 
+// ─── Dashboard ─────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const d = await apiFetch('/dashboard', {}, null);
+    document.getElementById('d-total').textContent = d.total;
+    document.getElementById('d-rate').textContent = d.fakeRate + '%';
+    document.getElementById('d-genuine').textContent = d.genuine;
+ 
+    const sentColors = { Positive: 'var(--genuine)', Negative: 'var(--fake)', Neutral: '#888' };
+    const maxS = Math.max(...Object.values(d.sentimentBreakdown), 1);
+    document.getElementById('sentiment-chart').innerHTML = Object.entries(d.sentimentBreakdown).map(([k,v]) => `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:5px"><span>${k}</span><span>${v} reviews</span></div>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(v/maxS*100)}%;background:${sentColors[k]}"></div></div>
+      </div>`).join('');
+ 
+    // Donut chart
+    const canvas = document.getElementById('donut-canvas');
+    const ctx = canvas.getContext('2d');
+    const { fake, total } = d;
+    const genuine = total - fake;
+    ctx.clearRect(0, 0, 200, 200);
+    const cx=100,cy=100,r=75,ir=50;
+    function arc(start,end,color){
+      ctx.beginPath();ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,r,start,end);ctx.closePath();
+      ctx.fillStyle=color;ctx.fill();
+    }
+    if (total > 0) {
+      const fakeAngle = (fake/(total||1))*Math.PI*2;
+      arc(-Math.PI/2, -Math.PI/2+fakeAngle, '#E24B4A');
+      arc(-Math.PI/2+fakeAngle, -Math.PI/2+Math.PI*2, '#4CAF7D');
+    } else {
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle='#333';ctx.fill();
+    }
+    ctx.beginPath();ctx.arc(cx,cy,ir,0,Math.PI*2);
+    ctx.fillStyle='#16161C';ctx.fill();
+    ctx.fillStyle='#F0EFF8';ctx.font='700 18px Syne,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(total, cx, cy-8);
+    ctx.font='12px DM Sans,sans-serif';ctx.fillStyle='#9898B0';ctx.fillText('reviews',cx,cy+10);
+ 
+    // Table
+    document.getElementById('db-table').innerHTML = d.reviews.length
+      ? `<table class="data-table">
+          <thead><tr><th>#</th><th>Product</th><th>Stars</th><th>Sentiment</th><th>Prediction</th><th>Confidence</th><th>Date</th></tr></thead>
+          <tbody>${d.reviews.map(r=>`<tr>
+            <td style="color:var(--text2)">${r.id.slice(0,8)}…</td>
+            <td>${r.product}</td>
+            <td class="stars">${'★'.repeat(r.stars)}</td>
+            <td><span class="badge badge-${r.sentiment.toLowerCase()}">${r.sentiment}</span></td>
+            <td><span class="badge badge-${r.prediction.toLowerCase()}">${r.prediction}</span></td>
+            <td>${r.confidence}%</td>
+            <td style="color:var(--text2)">${r.date}</td>
+          </tr>`).join('')}</tbody>
+        </table>`
+      : '<div class="info">No reviews yet.</div>';
+  } catch (e) {
+    document.getElementById('d-total').textContent = 'Err';
+  }
+}
+ 
+// ─── User Dashboard ────────────────────────────────────────────────────────
+async function loadUserDashboard() {
+  if (!currentUser) return;
+  document.getElementById('ud-greeting').textContent = currentUser.name + "'s Dashboard";
+  try {
+    const reviews = await apiFetch('/reviews/my');
+
+    // Metrics
+    const total = reviews.length;
+    const fakeCount = reviews.filter(r => r.prediction === 'Fake').length;
+    const avgConf = total ? Math.round(reviews.reduce((s, r) => s + r.confidence, 0) / total) : 0;
+    document.getElementById('ud-total').textContent = total;
+    document.getElementById('ud-fake').textContent = fakeCount;
+    document.getElementById('ud-avgconf').textContent = total ? avgConf + '%' : '—';
+
+    // Sentiment chart
+    const sentCounts = { Positive: 0, Negative: 0, Neutral: 0 };
+    reviews.forEach(r => sentCounts[r.sentiment]++);
+    const sentColors = { Positive: 'var(--genuine)', Negative: 'var(--fake)', Neutral: '#888' };
+    const maxS = Math.max(...Object.values(sentCounts), 1);
+    document.getElementById('ud-sentiment-chart').innerHTML = total
+      ? Object.entries(sentCounts).map(([k, v]) => `
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:5px"><span>${k}</span><span>${v} review${v!==1?'s':''}</span></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(v/maxS*100)}%;background:${sentColors[k]}"></div></div>
+        </div>`).join('')
+      : '<div class="info">No reviews yet.</div>';
+
+    // Donut
+    const canvas = document.getElementById('ud-donut');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 180, 180);
+    const cx=90, cy=90, r=68, ir=46;
+    if (total > 0) {
+      const fakeAngle = (fakeCount / total) * Math.PI * 2;
+      function arc2(start, end, color) {
+        ctx.beginPath(); ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, start, end); ctx.closePath();
+        ctx.fillStyle = color; ctx.fill();
+      }
+      arc2(-Math.PI/2, -Math.PI/2 + fakeAngle, '#E24B4A');
+      arc2(-Math.PI/2 + fakeAngle, -Math.PI/2 + Math.PI*2, '#4CAF7D');
+    } else {
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fillStyle='#333'; ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(cx, cy, ir, 0, Math.PI*2);
+    ctx.fillStyle = '#16161C'; ctx.fill();
+    ctx.fillStyle = '#F0EFF8'; ctx.font = '700 16px Syne,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(total, cx, cy - 7);
+    ctx.font = '11px DM Sans,sans-serif'; ctx.fillStyle = '#9898B0';
+    ctx.fillText('reviews', cx, cy + 10);
+
+    // Confidence bars per review
+    document.getElementById('ud-conf-bars').innerHTML = total
+      ? reviews.map(r => `
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:12px;color:var(--text)">${r.product}</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="badge badge-${r.prediction.toLowerCase()}" style="font-size:10px">${r.prediction}</span>
+              <span style="font-size:11px;color:var(--text2)">${r.confidence}%</span>
+            </div>
+          </div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${r.confidence}%;background:${r.prediction==='Fake'?'var(--fake)':'var(--genuine)'}"></div></div>
+        </div>`).join('')
+      : '<div class="info">No reviews yet.</div>';
+
+    // Table
+    document.getElementById('ud-table').innerHTML = total
+      ? `<table class="data-table">
+          <thead><tr><th>Product</th><th>Stars</th><th>Sentiment</th><th>Prediction</th><th>Confidence</th><th>Date</th></tr></thead>
+          <tbody>${reviews.map(r => `<tr>
+            <td style="font-weight:500">${r.product}</td>
+            <td class="stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</td>
+            <td><span class="badge badge-${r.sentiment.toLowerCase()}">${r.sentiment}</span></td>
+            <td><span class="badge badge-${r.prediction.toLowerCase()}">${r.prediction}</span>${r.mismatch?'<span class="badge badge-fake" style="margin-left:4px;font-size:10px">Mismatch</span>':''}</td>
+            <td>${r.confidence}%</td>
+            <td style="color:var(--text2)">${r.date}</td>
+          </tr>`).join('')}</tbody>
+        </table>`
+      : '<div class="info">No reviews yet. <a href="#" style="color:var(--accent2)" onclick="showPage(\'user\',document.querySelector(\'[data-page=user]\'))">Submit your first review →</a></div>';
+
+  } catch (e) {
+    document.getElementById('ud-total').textContent = 'Err';
+  }
+}
+
+localStorage.clear();
+</script>
+</body>
+</html>
